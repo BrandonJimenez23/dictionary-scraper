@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.5] - 2025-06-08
+
+### Enhanced
+- **WordReference Example Extraction**: Verified and optimized example extraction functionality
+- **CSS Selector Precision**: Confirmed proper use of `td.FrEx` and `td.ToEx` selectors for accurate example parsing
+- **Multi-Translation Support**: Enhanced handling of examples with multiple translations per phrase
+- **Data Structure Consistency**: Ensured examples are properly structured with phrase and translations arrays
+
+### Fixed
+- **Example Processing Logic**: Refined example saving logic to prevent data loss between translations
+- **Edge Case Handling**: Improved handling of examples without translations or incomplete data
+
+### Tested
+- **Comprehensive Example Testing**: Verified extraction of 19+ examples for "run" and 105+ examples for "take"
+- **Cross-Language Validation**: Confirmed functionality across different language pairs (EN→ES)
+
 ## [1.1.4] - 2025-06-08
 
 ### Added

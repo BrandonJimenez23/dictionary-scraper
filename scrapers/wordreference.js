@@ -144,25 +144,27 @@ function processWRDTable($table, $) {
     }
 
     // Check if this row has examples (FrEx, ToEx classes)
-    const $frEx = $row.find('.FrEx');
-    const $toEx = $row.find('.ToEx');
+    const $frEx = $row.find('td.FrEx');
+    const $toEx = $row.find('td.ToEx');
     
     if ($frEx.length > 0) {
-      // Start a new example
+      // Save previous example if it exists
       if (currentExample.phrase && currentTranslation) {
         currentTranslation.examples.push(currentExample);
-        currentExample = {};
       }
-      currentExample.phrase = $frEx.text().trim();
+      // Start a new example
+      currentExample = {
+        phrase: $frEx.text().trim(),
+        translations: []
+      };
       return;
     }
     
     if ($toEx.length > 0) {
       // Add translation to current example
-      if (!currentExample.translations) {
-        currentExample.translations = [];
+      if (currentExample.phrase) {
+        currentExample.translations.push($toEx.text().trim());
       }
-      currentExample.translations.push($toEx.text().trim());
       return;
     }
 
