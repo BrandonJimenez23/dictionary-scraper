@@ -1,6 +1,6 @@
 {
   "name": "multi-dictionary-scraper",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "type": "module",
   "main": "index.js",
   "module": "index.js",
@@ -26,11 +26,11 @@
   ],
   "description": "Professional multi-dictionary scraper supporting WordReference and Linguee with unified API, TypeScript definitions, and comprehensive language coverage for 1000+ language pairs.",
   "keywords": [
-    "dictionary", 
-    "translation", 
-    "scraper", 
-    "wordreference", 
-    "linguee", 
+    "dictionary",
+    "translation",
+    "scraper",
+    "wordreference",
+    "linguee",
     "multi-language",
     "npm-module",
     "translate",
@@ -57,7 +57,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/BrandonJimenez23/multi-dictionary-scraper.git"
+    "url": "git+https://github.com/BrandonJimenez23/multi-dictionary-scraper.git"
   },
   "bugs": {
     "url": "https://github.com/BrandonJimenez23/multi-dictionary-scraper/issues"

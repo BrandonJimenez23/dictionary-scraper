@@ -244,29 +244,3 @@ export function checkLanguageSupport(from, to) {
         normalizedTo: validation.to
     };
 }
-
-// Legacy support - keep the main function for backward compatibility
-async function main() {
-    console.log('Dictionary Scraper iniciado...');
-    
-    try {
-        console.log('Probando inglés a ruso...');
-        const resultRussian = await translateWithWordReference('hello', 'en', 'ru');
-        console.log('Resultado inglés-ruso:', JSON.stringify(resultRussian, null, 2));
-        
-        console.log('\n---\n');
-        
-        console.log('Probando inglés a español...');
-        const resultSpanish = await translateWithWordReference('rainbow', 'en', 'es');
-        console.log('Resultado inglés-español:', JSON.stringify(resultSpanish, null, 2));
-        
-    } catch (error) {
-        console.error('Error:', error.message);
-    }
-}
-
-if (import.meta.url === `file://${process.argv[1]}`) {
-    main().catch(console.error);
-}
-
-export { main };
