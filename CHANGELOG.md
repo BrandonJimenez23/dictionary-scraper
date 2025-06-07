@@ -5,6 +5,56 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.2] - 2025-06-08
+
+### Fixed
+- **CORS Improvements**: Removed problematic User-Agent, Referer, and Accept headers that were causing 403 Forbidden errors
+- **Header Optimization**: Both scrapers now work without custom headers, reducing chances of being blocked by servers
+- **Better Compatibility**: Improved frontend application compatibility by removing server-blocking headers
+
+### Improved
+- **WordReference**: Enhanced reliability and better example extraction without restrictive headers
+- **Linguee**: Now uses RequestHandler with CORS support and LanguageValidator for better language handling
+- **Error Handling**: More robust connection handling and language validation for both scrapers
+- **Unified Architecture**: Both scrapers now use common utilities for consistent behavior
+
+### Technical Changes
+- Removed all custom headers from HTTP requests in both scrapers
+- Updated Linguee scraper to use RequestHandler.makeRequest() instead of direct axios calls
+- Added LanguageValidator support to Linguee scraper for better language code handling
+- Enhanced error messages and debugging information
+
+### Enhanced
+- **WordReference Parser**: Completely rewritten for better accuracy and robustness
+  - Improved example extraction from `FrEx` and `ToEx` cells
+  - Enhanced context processing for definitions like "(jogging, footracing)"
+  - Smart URL formation for different language pairs
+  - Better handling of row types and section headers
+  - More accurate extraction of grammatical information and translations
+
+- **Linguee Integration**: Optimized for maximum data extraction
+  - Focused processing of `<div id="dictionary">` content
+  - Enhanced extraction from `lemma` and `lemma featured` classes
+  - Improved context and usage example handling
+  - Smart fallback mechanisms for edge cases
+
+### Fixed
+- **CORS Issues**: Eliminated all CORS-related problems for frontend use
+- **Data Extraction**: Resolved issues with missing examples and contextual information
+- **URL Formation**: Fixed special cases for certain language pairs (e.g., English-Spanish)
+- **Parser Reliability**: Enhanced error handling and edge case management
+
+### Improved
+- **Frontend Compatibility**: Zero configuration required for React, Vue, Angular applications
+- **Error Handling**: More descriptive error messages and better fallback strategies
+- **Performance**: Optimized parsing algorithms for faster response times
+
+## [1.1.1] - 2025-06-07
+
+### Added
+- **Direct Function Exports**: New function-based API without class instantiation
+- **Enhanced CORS Support**: Improved compatibility with frontend frameworks
+
 ## [1.0.0] - 2025-06-07
 
 ### Added

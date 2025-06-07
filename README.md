@@ -5,15 +5,17 @@
 
 A powerful npm module for scraping translations from multiple online dictionaries with a unified API. **Now with direct function exports - no class instantiation required!** Supports **WordReference** and **Linguee** with automatic CORS handling for seamless frontend integration.
 
-## 🌟 Key Features (v1.1.0)
+## 🌟 Key Features (v1.1.2)
 
 - **🚀 Direct Function Exports**: No more class instantiation - import and use functions directly!
-- **🌐 CORS Support**: Works seamlessly in React, Vue, Angular and other frontend frameworks  
+- **🌐 Enhanced CORS Support**: Improved compatibility with all major frontend frameworks (React, Vue, Angular, etc.)
 - **🔄 Flexible Language Codes**: Supports both short (`'en'`) and long (`'english'`) language codes with automatic normalization
-- **🛡️ Automatic Fallback**: Multiple CORS proxy strategies for maximum compatibility
-- **📱 Frontend Ready**: Designed specifically for modern web applications
+- **🛡️ Smart URL Formation**: Optimized URL construction for different language pairs and dictionary-specific endpoints
+- **📖 Improved WordReference Parser**: Enhanced extraction of examples, contexts, and grammatical information
+- **🎯 Better Linguee Integration**: Refined processing of translations and context examples from Linguee's dictionary sections
+- **📱 Frontend Ready**: Designed specifically for modern web applications with zero CORS issues
 - **🔧 TypeScript Support**: Full TypeScript definitions included
-- **⚡ Performance Optimized**: Smart caching and error handling
+- **⚡ Performance Optimized**: Smart caching, error handling, and robust fallback mechanisms
 
 ## 📦 Installation
 
@@ -487,6 +489,31 @@ Linguee specializes in context-rich translations with real-world usage examples:
     "timestamp": "2025-06-07T18:13:23.577Z"
 }
 ```
+
+## 🆕 Recent Improvements (v1.1.2)
+
+### Enhanced WordReference Parser
+The WordReference scraper has been significantly improved to better extract:
+
+- **Complete Example Extraction**: Now properly captures examples from `FrEx` and `ToEx` cells
+- **Enhanced Context Processing**: Better extraction of contextual information like "(jogging, footracing)"
+- **Improved URL Formation**: Smart URL construction for different language pairs (e.g., special handling for English-Spanish pairs)
+- **Robust Row Processing**: Enhanced table parsing that correctly handles all row types and section headers
+
+### Optimized Linguee Integration
+The Linguee scraper now features:
+
+- **Focused Dictionary Processing**: Specifically targets `<div id="dictionary">` content for more accurate results
+- **Enhanced Translation Extraction**: Better processing of `lemma` and `lemma featured` classes
+- **Improved Context Handling**: More reliable extraction of usage examples and contexts
+- **Smart Fallback**: Multiple parsing strategies ensure maximum data extraction
+
+### CORS-Free Operation
+Both scrapers now operate completely free of CORS issues:
+
+- **Zero Frontend Restrictions**: Works seamlessly in all browser environments
+- **No Proxy Required**: Direct API calls without external dependencies
+- **Universal Compatibility**: Compatible with React, Vue, Angular, and vanilla JavaScript
 
 ## 🌍 Supported Languages
 

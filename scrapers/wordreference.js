@@ -36,16 +36,23 @@ export async function scrapeWordReference(word, from = 'en', to = 'es') {
   for (const fromCode of fromAlternatives) {
     for (const toCode of toAlternatives) {
       try {
-        const url = `https://www.wordreference.com/${fromCode}${toCode}/${encodeURIComponent(word)}`;
+        // Special URL formatting for certain language pairs
+        let url;
+        const pair = `${fromCode}${toCode}`;
         
-        const html = await RequestHandler.makeRequest(url, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.9',
-            'Referer': 'https://www.wordreference.com/'
-          }
-        });
+        // Handle special cases based on the example provided
+        if (/enes/.test(pair) && fromCode === 'en') {
+          url = `https://www.wordreference.com/es/translation.asp?tranword=${encodeURIComponent(word)}`;
+        } else if (/esen/.test(pair) && fromCode === 'es') {
+          url = `https://www.wordreference.com/es/en/translation.asp?spen=${encodeURIComponent(word)}`;
+        } else {
+          // Default format
+          url = `https://www.wordreference.com/${fromCode}${toCode}/${encodeURIComponent(word)}`;
+        }
+        
+        console.log(`Trying URL: ${url}`);
+        
+        const html = await RequestHandler.makeRequest(url);
 
         const result = processHTML(html, word);
         
@@ -55,7 +62,8 @@ export async function scrapeWordReference(word, from = 'en', to = 'es') {
             ...result,
             languagePair: `${fromCode}-${toCode}`,
             normalizedFrom,
-            normalizedTo
+            normalizedTo,
+            url: url // Include the successful URL for debugging
           };
         }
       } catch (error) {
@@ -107,53 +115,139 @@ function processWRDTable($table, $) {
 
   const titleRow = $table.find('tr.wrtopsection');
   if (titleRow.length > 0) {
-    result.title = titleRow.first().text().trim();
+    result.title = titleRow.find('.ph').text().trim() || titleRow.text().trim();
   }
 
-  const translationRows = $table.find('tr.even[id], tr.odd[id]');
-  translationRows.each((_, row) => {
+  // Get all rows including section headers and translation rows
+  const allRows = $table.find('tr.wrtopsection, tr.odd, tr.even').not('.more');
+  
+  let currentTranslation = null;
+  let currentExample = {};
+  
+  const resetCurrentTranslation = () => {
+    if (currentExample && Object.keys(currentExample).length > 0 && currentTranslation) {
+      currentTranslation.examples.push(currentExample);
+    }
+    if (currentTranslation) {
+      result.translations.push(currentTranslation);
+    }
+    currentTranslation = null;
+    currentExample = {};
+  };
+
+  allRows.each((_, row) => {
     const $row = $(row);
 
-    const fromCell = $row.find('td.FrWrd');
-    const toCell = $row.find('td.ToWrd');
-    if (fromCell.length === 0 || toCell.length === 0) return;
-
-    const fromText = fromCell.clone().find('em').remove().end().text().trim();
-    const fromPos = fromCell.find('em').text().trim();
-
-    const toText = toCell.clone().find('em').remove().end().text().trim();
-    const toPos = toCell.find('em').text().trim();
-
-    // Extract definition (if available in the source cell)
-    const definition = fromCell.find('.tooltip').text().trim() || '';
-
-    const exampleCell = $row.find('td.Ex');
-    const examples = [];
-    if (exampleCell.length > 0) {
-      const exampleText = exampleCell.text().trim();
-      const exampleParts = exampleText.split('⇒');
-      if (exampleParts.length === 2) {
-        examples.push({
-          phrase: exampleParts[0].trim(),
-          translations: [exampleParts[1].trim()]
-        });
-      }
+    // Skip section headers - we already processed the title
+    if ($row.hasClass('wrtopsection')) {
+      return;
     }
 
-    result.translations.push({
-      word: { 
-        word: fromText, 
-        pos: fromPos 
-      },
-      definition: definition,
-      meanings: [{ 
-        word: toText, 
-        pos: toPos,
-        sense: '' // WordReference doesn't typically provide sense tags
-      }],
-      examples
-    });
+    // Check if this row has examples (FrEx, ToEx classes)
+    const $frEx = $row.find('.FrEx');
+    const $toEx = $row.find('.ToEx');
+    
+    if ($frEx.length > 0) {
+      // Start a new example
+      if (currentExample.phrase && currentTranslation) {
+        currentTranslation.examples.push(currentExample);
+        currentExample = {};
+      }
+      currentExample.phrase = $frEx.text().trim();
+      return;
+    }
+    
+    if ($toEx.length > 0) {
+      // Add translation to current example
+      if (!currentExample.translations) {
+        currentExample.translations = [];
+      }
+      currentExample.translations.push($toEx.text().trim());
+      return;
+    }
+
+    // Check if this is a new translation row (has FrWrd and ToWrd)
+    const $fromCell = $row.find('td.FrWrd');
+    const $toCell = $row.find('td.ToWrd');
+    
+    if ($fromCell.length > 0 || $toCell.length > 0) {
+      // This is a new translation, save the previous one
+      resetCurrentTranslation();
+      
+      // Initialize new translation
+      currentTranslation = {
+        word: { word: '', pos: '' },
+        definition: '',
+        meanings: [],
+        examples: []
+      };
+
+      // Extract source word and part of speech
+      if ($fromCell.length > 0) {
+        const fromText = $fromCell.find('strong').text().trim().replace('⇒', '') || 
+                        $fromCell.clone().find('em, .POS2').remove().end().text().trim();
+        const fromPos = $fromCell.find('em, .POS2').text().trim();
+        
+        currentTranslation.word.word = fromText;
+        currentTranslation.word.pos = fromPos;
+      }
+
+      // Extract target word and part of speech
+      const currentMeaning = { word: '', pos: '' };
+      if ($toCell.length > 0) {
+        const toPos = $toCell.find('em, .POS2').text().trim();
+        const $toClone = $toCell.clone();
+        $toClone.find('em, .POS2').remove();
+        const toText = $toClone.text().trim().replace('⇒', '');
+        
+        currentMeaning.word = toText;
+        currentMeaning.pos = toPos;
+      }
+
+      // Extract definition from other cells
+      const $allCells = $row.find('td');
+      $allCells.each((_, cell) => {
+        const $cell = $(cell);
+        
+        // Skip the main word cells
+        if ($cell.hasClass('FrWrd') || $cell.hasClass('ToWrd')) {
+          return;
+        }
+
+        // Look for sense information
+        const senseText = $cell.find('.dsense').text().trim().replace(/[\(\)]/g, '');
+        $cell.find('.dsense').remove();
+        if (senseText) {
+          currentMeaning.sense = senseText;
+        }
+
+        // Look for word sense in source
+        const wordSense = $cell.find('.Fr2').text().trim();
+        $cell.find('.Fr2').remove();
+        if (wordSense) {
+          currentTranslation.word.sense = wordSense;
+        }
+
+        // Extract definition (remove parentheses if they wrap the entire text)
+        const cellText = $cell.text().trim();
+        if (cellText && !currentTranslation.definition) {
+          if (cellText.startsWith('(') && cellText.endsWith(')')) {
+            currentTranslation.definition = cellText.slice(1, -1).trim();
+          } else {
+            currentTranslation.definition = cellText;
+          }
+        }
+      });
+
+      // Add the meaning if it has content
+      if (currentMeaning.word || currentMeaning.pos) {
+        currentTranslation.meanings.push(currentMeaning);
+      }
+    }
   });
+
+  // Don't forget the last translation
+  resetCurrentTranslation();
 
   return result;
 }

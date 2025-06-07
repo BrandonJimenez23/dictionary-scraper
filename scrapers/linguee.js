@@ -5,8 +5,8 @@ import { LanguageValidator, RequestHandler } from '../utils/common.js';
 /**
  * Linguee scraper - Extracts translations with real-world contexts
  * @param {string} word - Word to translate
- * @param {string} from - Source language (e.g., 'en', 'english')
- * @param {string} to - Target language (e.g., 'es', 'spanish')
+ * @param {string} from - Source language (e.g., 'en')
+ * @param {string} to - Target language (e.g., 'es')
  * @returns {Object} JSON object with translations and contexts
  */
 export async function scrapeLinguee(word, from = 'en', to = 'es') {
@@ -39,15 +39,7 @@ export async function scrapeLinguee(word, from = 'en', to = 'es') {
             try {
                 const url = buildLingueeURL(word, fromCode, toCode);
                 
-                const html = await RequestHandler.makeRequest(url, {
-                    headers: {
-                        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                        'Accept-Language': 'en-US,en;q=0.9',
-                        'Referer': 'https://www.linguee.com/'
-                    }
-                });
-
+                const html = await RequestHandler.makeRequest(url);
                 const result = processLingueeHTML(html, word, normalizedFrom, normalizedTo);
                 
                 // Check if we got valid results
@@ -56,7 +48,8 @@ export async function scrapeLinguee(word, from = 'en', to = 'es') {
                         ...result,
                         languagePair: `${fromCode}-${toCode}`,
                         normalizedFrom,
-                        normalizedTo
+                        normalizedTo,
+                        url: url // Include the successful URL for debugging
                     };
                 }
             } catch (error) {
@@ -81,32 +74,15 @@ export async function scrapeLinguee(word, from = 'en', to = 'es') {
 }
 
 function buildLingueeURL(word, from, to) {
-    // Language name mapping for Linguee URLs - supports both short and long codes
+    // Language name mapping for Linguee URLs
     const langNames = {
-        'en': 'english', 'english': 'english',
-        'es': 'spanish', 'spanish': 'spanish',
-        'fr': 'french', 'french': 'french',
-        'de': 'german', 'german': 'german',
-        'pt': 'portuguese', 'portuguese': 'portuguese',
-        'it': 'italian', 'italian': 'italian',
-        'nl': 'dutch', 'dutch': 'dutch',
-        'pl': 'polish', 'polish': 'polish',
-        'sv': 'swedish', 'swedish': 'swedish',
-        'da': 'danish', 'danish': 'danish',
-        'fi': 'finnish', 'finnish': 'finnish',
-        'cs': 'czech', 'czech': 'czech',
-        'ro': 'romanian', 'romanian': 'romanian',
-        'tr': 'turkish', 'turkish': 'turkish',
-        'el': 'greek', 'greek': 'greek',
-        'hu': 'hungarian', 'hungarian': 'hungarian',
-        'bg': 'bulgarian', 'bulgarian': 'bulgarian',
-        'hr': 'croatian', 'croatian': 'croatian',
-        'sk': 'slovak', 'slovak': 'slovak',
-        'sl': 'slovenian', 'slovenian': 'slovenian',
-        'et': 'estonian', 'estonian': 'estonian',
-        'lv': 'latvian', 'latvian': 'latvian',
-        'lt': 'lithuanian', 'lithuanian': 'lithuanian',
-        'mt': 'maltese', 'maltese': 'maltese'
+        'en': 'english',
+        'es': 'spanish', 
+        'fr': 'french',
+        'de': 'german',
+        'pt': 'portuguese',
+        'it': 'italian',
+        'ru': 'russian',
     };
 
     const fromName = langNames[from] || from;
@@ -126,37 +102,64 @@ function processLingueeHTML(html, inputWord, fromLang, toLang) {
         translations: []
     };
 
-    // Extract translations using the correct Linguee structure
-    $('.lemma').each((index, element) => {
+    // Buscar dentro del div dictionary o usar toda la página como fallback
+    const $dictionary = $('#dictionary').length > 0 ? $('#dictionary') : $('body');
+
+    // Procesar tanto .lemma.featured como .lemma elementos principales
+    $dictionary.find('.lemma').each((_, element) => {
         const $lemma = $(element);
-        
-        // Get source word from the main lemma link
-        const sourceWord = $lemma.find('.dictLink').first().text().trim();
-        
+
+        const sourceWord = $lemma.find('.tag_lemma .dictLink').first().text().trim();
         if (!sourceWord) return;
+
+        // Extraer URL de audio - buscar el elemento audio o el atributo onclick
+        let audioUrl = null;
+        const $audioElement = $lemma.find('audio source[type="audio/mpeg"]');
+        if ($audioElement.length > 0) {
+            audioUrl = $audioElement.attr('src');
+        } else {
+            // Buscar en el onclick del elemento audio
+            const $audioLink = $lemma.find('.audio[onclick]');
+            if ($audioLink.length > 0) {
+                const onclickContent = $audioLink.attr('onclick');
+                const match = onclickContent.match(/playSound\([^,]+,\s*"([^"]+)"/);
+                if (match) {
+                    audioUrl = match[1];
+                }
+            }
+        }
+
+        // Extraer tipo de palabra directamente sin mapeo
+        const wordType = $lemma.find('.tag_wordtype').first().text().trim();
 
         const translation = {
             from: sourceWord,
-            fromType: extractWordType($lemma.find('.tag_wordtype').first().text()),
+            fromType: wordType,
+            audio: audioUrl ? (audioUrl.startsWith('http') ? audioUrl : `https://www.linguee.com${audioUrl}`) : null,
             translations: [],
             contexts: []
         };
 
-        // Extract translations from the translation divs
-        $lemma.find('.translation .dictLink').each((i, translationEl) => {
-            const translatedWord = $(translationEl).text().trim();
-            
-            if (translatedWord && translatedWord !== sourceWord) {
+        // Buscar traducciones en los elementos .translation
+        $lemma.find('.translation').each((i, tEl) => {
+            const $t = $(tEl);
+            const $transLink = $t.find('.tag_trans .dictLink');
+            const translatedText = $transLink.text().trim();
+
+            if (translatedText && translatedText !== sourceWord) {
+                // Extraer tipo de la traducción directamente
+                const transType = $t.find('.tag_type').text().trim();
+                
                 translation.translations.push({
-                    text: translatedWord,
-                    type: extractWordType($(translationEl).parent().find('.tag_wordtype').text()),
-                    frequency: 'unknown',
-                    verified: $(translationEl).closest('.translation').find('.icon_verified').length > 0
+                    text: translatedText,
+                    type: transType,
+                    frequency: extractFrequency($t),
+                    verified: $t.find('.icon_verified').length > 0
                 });
             }
         });
 
-        // Extract context examples
+        // Buscar ejemplos/contextos
         $lemma.find('.example').each((i, exampleEl) => {
             const $example = $(exampleEl);
             const sourceText = $example.find('.tag_s').text().trim();
@@ -177,26 +180,74 @@ function processLingueeHTML(html, inputWord, fromLang, toLang) {
         }
     });
 
+    // Si no hay resultados, intentar con un algoritmo de fallback más simple
+    if (result.translations.length === 0) {
+        console.log('No se encontraron traducciones con el algoritmo principal, intentando fallback...');
+        return tryFallbackProcessing($, inputWord, fromLang, toLang);
+    }
+
+    return result;
+}
+
+
+
+function tryFallbackProcessing($, inputWord, fromLang, toLang) {
+    const result = {
+        source: 'linguee',
+        inputWord,
+        fromLang,
+        toLang,
+        translations: []
+    };
+
+    // Intentar buscar cualquier elemento con .dictLink que contenga traducciones
+    $('.dictLink').each((_, linkEl) => {
+        const $link = $(linkEl);
+        const text = $link.text().trim();
+        
+        if (text && text.toLowerCase().includes(inputWord.toLowerCase())) {
+            // Encontrar el contenedor parent más cercano que pueda tener traducciones
+            const $container = $link.closest('.lemma, .translation_group, .meaninggroup');
+            
+            if ($container.length > 0) {
+                const translation = {
+                    from: text,
+                    fromType: 'unknown',
+                    audio: null,
+                    translations: [],
+                    contexts: []
+                };
+
+                // Buscar traducciones relacionadas
+                $container.find('.dictLink').each((_, tLink) => {
+                    const $tLink = $(tLink);
+                    const tText = $tLink.text().trim();
+                    
+                    if (tText && tText !== text) {
+                        translation.translations.push({
+                            text: tText,
+                            type: 'unknown',
+                            frequency: 'unknown',
+                            verified: false
+                        });
+                    }
+                });
+
+                if (translation.translations.length > 0) {
+                    result.translations.push(translation);
+                }
+            }
+        }
+    });
+
     return result;
 }
 
 function extractWordType(typeText) {
     if (!typeText) return '';
-
-    const typeMap = {
-        'noun': 'n',
-        'verb': 'v',
-        'adjective': 'adj',
-        'adverb': 'adv',
-        'preposition': 'prep',
-        'conjunction': 'conj',
-        'interjection': 'interj',
-        'pronoun': 'pron',
-        'article': 'art'
-    };
-
-    const normalizedType = typeText.toLowerCase().trim();
-    return typeMap[normalizedType] || normalizedType;
+    
+    // Usar directamente el texto sin mapeo, solo limpiar
+    return typeText.toLowerCase().trim();
 }
 
 function extractFrequency(element) {
@@ -217,7 +268,7 @@ export function isLanguagePairSupported(from, to) {
     const supportedPairs = [
         'en-es', 'es-en', 'en-fr', 'fr-en', 'en-de', 'de-en',
         'en-pt', 'pt-en', 'en-it', 'it-en', 'fr-es', 'es-fr',
-        'de-es', 'es-de', 'de-fr', 'fr-de'
+        'de-es', 'es-de', 'de-fr', 'fr-de', 'en-ru', 'ru-en',
     ];
 
     return supportedPairs.includes(`${from}-${to}`);

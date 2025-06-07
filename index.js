@@ -15,7 +15,7 @@ const DICTIONARIES = {
     },
     linguee: {
         name: 'Linguee',
-        languages: ['en', 'es', 'fr', 'de', 'pt', 'it', 'nl', 'pl', 'sv', 'da', 'fi', 'el', 'hu', 'sl', 'lv', 'lt', 'et', 'mt', 'sk', 'bg', 'ro', 'hr', 'cs'],
+        languages: ['en', 'es', 'fr', 'de', 'pt', 'it', 'ru', 'nl', 'pl', 'sv', 'da', 'fi', 'el', 'hu', 'sl', 'lv', 'lt', 'et', 'mt', 'sk', 'bg', 'ro', 'hr', 'cs', 'tr'],
         features: ['contexts', 'frequency', 'verified-translations'],
         priority: 2
     }
@@ -79,6 +79,7 @@ export async function translateWithLinguee(word, from, to) {
 
     try {
         const result = await scrapeLinguee(word, validation.from, validation.to);
+        console.log('Linguee result:', result);
         return {
             ...result,
             source: 'linguee',
