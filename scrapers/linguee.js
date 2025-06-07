@@ -4,6 +4,7 @@ import { LanguageValidator, RequestHandler } from '../utils/common.js';
 
 /**
  * Linguee scraper - Extracts translations with real-world contexts
+ * Note: In browser environments, Linguee requires CORS proxy due to strict CORS policy
  * @param {string} word - Word to translate
  * @param {string} from - Source language (e.g., 'en')
  * @param {string} to - Target language (e.g., 'es')
@@ -44,32 +45,53 @@ export async function scrapeLinguee(word, from = 'en', to = 'es') {
                 
                 // Check if we got valid results
                 if (result.translations && result.translations.length > 0) {
+                    const isBrowserEnv = typeof window !== 'undefined' && typeof window.document !== 'undefined';
                     return {
                         ...result,
                         languagePair: `${fromCode}-${toCode}`,
                         normalizedFrom,
                         normalizedTo,
-                        url: url // Include the successful URL for debugging
+                        url: url, // Include the successful URL for debugging
+                        environment: isBrowserEnv ? 'browser' : 'node'
                     };
                 }
             } catch (error) {
                 lastError = error;
-                console.warn(`Linguee failed with ${fromCode}-${toCode}:`, error.message);
+                
+                // Provide specific error message for different types of errors
+                if (error.message.includes('CORS') || error.message.includes('cross-origin') || error.message.includes('Network Error')) {
+                    console.warn(`🚫 Linguee CORS blocked for ${fromCode}-${toCode}: ${error.message}`);
+                } else if (error.message.includes('520') || error.message.includes('502') || error.message.includes('503')) {
+                    console.warn(`⚠️ Linguee server error for ${fromCode}-${toCode}: ${error.message}`);
+                } else if (error.message.includes('timeout')) {
+                    console.warn(`⏰ Linguee timeout for ${fromCode}-${toCode}: ${error.message}`);
+                } else {
+                    console.warn(`❌ Linguee failed with ${fromCode}-${toCode}: ${error.message}`);
+                }
                 continue;
             }
         }
     }
 
-    // If all attempts failed, return error result
+    // If all attempts failed, return error result with helpful message
+    const isBrowserEnv = typeof window !== 'undefined' && typeof window.document !== 'undefined';
+    const errorMessage = lastError?.message || `No translations found for "${word}" from ${validation.fromName} to ${validation.toName}`;
+    
+    let helpfulError = errorMessage;
+    if (lastError?.message.includes('CORS') && isBrowserEnv) {
+        helpfulError = `${errorMessage}. Note: Running in browser environment. Some language pairs may not work due to CORS restrictions. Try using Node.js for better compatibility.`;
+    }
+
     return {
         source: 'linguee',
         inputWord: word,
         fromLang: normalizedFrom,
         toLang: normalizedTo,
         translations: [],
-        error: lastError?.message || `No translations found for "${word}" from ${validation.fromName} to ${validation.toName}`,
+        error: helpfulError,
         attemptedLanguagePairs: fromAlternatives.flatMap(f => toAlternatives.map(t => `${f}-${t}`)),
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        environment: isBrowserEnv ? 'browser' : 'node'
     };
 }
 
@@ -89,7 +111,7 @@ function buildLingueeURL(word, from, to) {
     const toName = langNames[to] || to;
     
     // Always use .com domain to avoid regional redirects
-    return `https://www.linguee.com/${fromName}-${toName}/search?source=${fromName}&query=${encodeURIComponent(word)}`;
+    return `https://www.linguee.com/${fromName}-${toName}/search?source=auto&query=${encodeURIComponent(word)}`;
 }
 
 function processLingueeHTML(html, inputWord, fromLang, toLang) {

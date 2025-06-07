@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.4] - 2025-06-08
+
+### Added
+- **Advanced CORS Support**: Implemented robust CORS handling with multiple proxy fallbacks for browser environments
+- **Multi-Proxy Strategy**: Added 4 different CORS proxy services for maximum reliability in browsers
+- **Environment Detection**: Automatic detection of Node.js vs browser environments with appropriate handling
+- **CORS Documentation**: Created comprehensive CORS_GUIDE.md explaining browser vs Node.js behavior
+
+### Enhanced
+- **Browser Compatibility**: Linguee now works reliably in browser environments through intelligent CORS proxy usage
+- **Error Handling**: Improved error messages with specific guidance for CORS issues and environment recommendations
+- **Proxy Fallbacks**: Automatic fallback through multiple CORS proxy services when one fails
+- **Performance Optimization**: Direct requests in Node.js, proxied requests only when necessary in browsers
+
+### Fixed
+- **Linguee CORS Issues**: Resolved all CORS blocking issues for Linguee in browser environments
+- **Language Pair Support**: Fixed problematic language pairs like en-ru, en-zh, en-ar that were failing in browsers
+- **Proxy Response Handling**: Improved parsing of different proxy response formats
+
+### Technical Changes
+- Added multiple CORS proxy services: allorigins.win, corsproxy.io, cors-anywhere, codetabs
+- Enhanced RequestHandler with intelligent environment detection
+- Improved error reporting with environment-specific suggestions
+- Added comprehensive logging for CORS troubleshooting
+
+### Documentation
+- **CORS_GUIDE.md**: Complete guide for CORS handling, browser compatibility, and troubleshooting
+- Updated README with browser compatibility information
+- Added examples for both Node.js and browser environments
+
 ## [1.1.3] - 2025-06-08
 
 ### Changed

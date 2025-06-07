@@ -311,11 +311,19 @@ export class ErrorHandler {
 }
 
 /**
- * HTTP Request utilities - Clean requests without headers or proxies
+ * HTTP Request utilities - Clean requests with robust CORS fallback
  */
 export class RequestHandler {
+    // Multiple CORS proxies for better reliability
+    static CORS_PROXIES = [
+        'https://api.allorigins.win/get?url=',
+        'https://corsproxy.io/?',
+        'https://cors-anywhere.herokuapp.com/',
+        'https://api.codetabs.com/v1/proxy?quest='
+    ];
+
     /**
-     * Makes a simple HTTP request without any headers
+     * Makes a simple HTTP request without headers, with CORS fallback for browsers
      * @param {string} url - Target URL
      * @param {Object} options - Request options (optional)
      * @returns {Promise<string>} Response HTML
@@ -326,9 +334,65 @@ export class RequestHandler {
             ...options
         };
 
+        // Check if running in browser environment
+        if (typeof window !== 'undefined' && typeof window.document !== 'undefined') {
+            // Browser environment - try CORS proxy for Linguee only
+            if (url.includes('linguee.com')) {
+                return await this.makeRequestWithCorsProxy(url, config);
+            }
+        }
+
+        // Node.js environment or non-Linguee URLs - direct request
         const axios = await import('axios');
         const response = await axios.default.get(url, config);
         return response.data;
+    }
+
+    /**
+     * Makes request through CORS proxy for browser environment with multiple fallbacks
+     * @param {string} url - Target URL
+     * @param {Object} config - Request config
+     * @returns {Promise<string>} Response HTML
+     */
+    static async makeRequestWithCorsProxy(url, config) {
+        const errors = [];
+        
+        // Try each CORS proxy
+        for (const proxy of this.CORS_PROXIES) {
+            try {
+                const proxyUrl = proxy + encodeURIComponent(url);
+                const axios = await import('axios');
+                
+                const response = await axios.default.get(proxyUrl, {
+                    timeout: config.timeout || 15000,
+                    headers: {
+                        'Accept': 'application/json, text/plain, */*'
+                    }
+                });
+                
+                // Handle different proxy response formats
+                let content = null;
+                if (response.data && typeof response.data === 'object') {
+                    // allorigins.win format
+                    content = response.data.contents || response.data.data;
+                } else if (typeof response.data === 'string') {
+                    // Direct string response
+                    content = response.data;
+                }
+                
+                if (content) {
+                    return content;
+                }
+                
+                throw new Error('Invalid proxy response format');
+            } catch (error) {
+                errors.push(`${proxy}: ${error.message}`);
+                continue;
+            }
+        }
+        
+        // If all proxies fail, throw error with details
+        throw new Error(`All CORS proxies failed. Errors: ${errors.join('; ')}. Try running in Node.js environment for direct access.`);
     }
 }
 

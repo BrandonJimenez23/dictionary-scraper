@@ -3,19 +3,35 @@
 [![npm version](https://badge.fury.io/js/multi-dictionary-scraper.svg)](https://badge.fury.io/js/multi-dictionary-scraper)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A powerful npm module for scraping translations from multiple online dictionaries with a unified API. **Now with direct function exports - no class instantiation required!** Supports **WordReference** and **Linguee** with automatic CORS handling for seamless frontend integration.
+A powerful npm module for scraping translations from multiple online dictionaries with a unified API. **Now with direct function exports - no class instantiation required!** Supports **WordReference** and **Linguee** with **advanced CORS handling** for seamless frontend integration in both Node.js and browser environments.
 
-## 🌟 Key Features (v1.1.2)
+## 🌟 Key Features (v1.1.4)
 
 - **🚀 Direct Function Exports**: No more class instantiation - import and use functions directly!
-- **🌐 Enhanced CORS Support**: Improved compatibility with all major frontend frameworks (React, Vue, Angular, etc.)
+- **🌐 Advanced CORS Support**: Robust CORS handling with multiple proxy fallbacks for browser environments
+- **🔄 Cross-Environment Compatibility**: Works perfectly in both Node.js and modern browsers (React, Vue, Angular, etc.)
+- **🛡️ Intelligent Environment Detection**: Automatically detects environment and applies appropriate request strategies
 - **🔄 Flexible Language Codes**: Supports both short (`'en'`) and long (`'english'`) language codes with automatic normalization
 - **🛡️ Smart URL Formation**: Optimized URL construction for different language pairs and dictionary-specific endpoints
 - **📖 Improved WordReference Parser**: Enhanced extraction of examples, contexts, and grammatical information
-- **🎯 Better Linguee Integration**: Refined processing of translations and context examples from Linguee's dictionary sections
-- **📱 Frontend Ready**: Designed specifically for modern web applications with zero CORS issues
+- **🎯 Enhanced Linguee Integration**: Refined processing with CORS proxy support for problematic language pairs
+- **📱 Frontend Ready**: Zero configuration required for frontend frameworks - handles CORS automatically
 - **🔧 TypeScript Support**: Full TypeScript definitions included
-- **⚡ Performance Optimized**: Smart caching, error handling, and robust fallback mechanisms
+- **⚡ Performance Optimized**: Direct requests in Node.js, smart proxy usage only when needed in browsers
+
+## 🌐 Browser & CORS Compatibility
+
+### ✅ Node.js Environment (Recommended)
+- **WordReference**: Direct access, no restrictions
+- **Linguee**: Direct access, no restrictions  
+- **Performance**: Maximum speed and reliability
+
+### ✅ Browser Environment
+- **WordReference**: Direct access, works perfectly
+- **Linguee**: Automatic CORS proxy with multiple fallbacks
+- **Compatibility**: React, Vue, Angular, vanilla JavaScript
+
+The package automatically detects your environment and handles CORS issues transparently. For detailed information, see [CORS_GUIDE.md](./CORS_GUIDE.md).
 
 ## 📦 Installation
 
@@ -47,7 +63,7 @@ import {
   translateWith 
 } from 'multi-dictionary-scraper';
 
-// WordReference translation
+// WordReference translation (works in all environments)
 const wrResult = await translateWithWordReference('running', 'en', 'ru');
 
 // Linguee translation  
