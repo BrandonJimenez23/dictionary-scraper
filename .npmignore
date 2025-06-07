@@ -1,0 +1,43 @@
+# Development files
+tests/
+*.test.js
+test-*.js
+debug-*.js
+scratch.*
+
+# Documentation (keep only README.md in package)
+IMPLEMENTATION_GUIDE.md
+DEPLOYMENT_GUIDE.md
+DICTIONARY_FORMATS.md
+CHANGELOG.md
+
+# Development configuration
+.gitignore
+jest.config.json
+
+# IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+*.swp
+*.swo
+
+# Git files
+.git/
+.gitignore
+
+# Node modules
+node_modules/
+
+# Temporary files
+tmp/
+temp/
+.tmp/
+
+# Logs and cache
+*.log
+.cache/
+coverage/
+
+# Environment files
+.env*

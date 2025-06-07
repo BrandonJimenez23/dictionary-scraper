@@ -1,0 +1,72 @@
+{
+  "name": "multi-dictionary-scraper",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "multi-scraper.js",
+  "module": "multi-scraper.js",
+  "types": "index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./multi-scraper.js",
+      "require": "./multi-scraper.js"
+    }
+  },
+  "files": [
+    "multi-scraper.js",
+    "scrapers/",
+    "utils/",
+    "index.js",
+    "index.d.ts",
+    "examples.js",
+    "README.md"
+  ],
+  "description": "Professional multi-dictionary scraper supporting WordReference and Linguee with unified API, TypeScript definitions, and comprehensive language coverage for 1000+ language pairs.",
+  "keywords": [
+    "dictionary", 
+    "translation", 
+    "scraper", 
+    "wordreference", 
+    "linguee", 
+    "multi-language",
+    "npm-module",
+    "translate",
+    "definitions",
+    "multilingual",
+    "translator",
+    "language-pairs",
+    "web-scraping",
+    "typescript",
+    "es-modules",
+    "translation-api",
+    "dictionary-api"
+  ],
+  "author": {
+    "name": "Brandon",
+    "email": "brandon23jimenez3@gmail.com"
+  },
+  "license": "MIT",
+  "scripts": {
+    "test": "node examples.js",
+    "test:wordreference": "node index.js",
+    "start": "node examples.js",
+    "dev": "node --watch examples.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/multi-dictionary-scraper.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/multi-dictionary-scraper/issues"
+  },
+  "homepage": "https://github.com/yourusername/multi-dictionary-scraper#readme",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "dependencies": {
+    "axios": "^1.9.0",
+    "cheerio": "^1.0.0"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0"
+  }
+}

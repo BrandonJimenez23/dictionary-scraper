@@ -1,0 +1,61 @@
+# Node.js dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# NPM package files
+*.tgz
+package-lock.json
+yarn.lock
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Testing and coverage
+coverage/
+.nyc_output/
+*.lcov
+
+# Temporary files
+tmp/
+temp/
+.tmp/
+
+# Logs
+logs/
+*.log
+
+# Development and testing files
+test-*.js
+debug-*.js
+scratch.*
+
+# Build artifacts (if you add build process later)
+dist/
+build/
+out/
+
+# Cache directories
+.cache/
+.parcel-cache/
