@@ -311,115 +311,24 @@ export class ErrorHandler {
 }
 
 /**
- * HTTP Request utilities with CORS handling and fallback strategies
+ * HTTP Request utilities - Clean requests without headers or proxies
  */
 export class RequestHandler {
-    static DEFAULT_HEADERS = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.5',
-        'Accept-Encoding': 'gzip, deflate',
-        'DNT': '1',
-        'Connection': 'keep-alive',
-        'Upgrade-Insecure-Requests': '1'
-    };
-
-    static CORS_PROXIES = [
-        'https://api.allorigins.win/get?url=',
-        'https://corsproxy.io/?',
-        'https://cors-anywhere.herokuapp.com/',
-        'https://thingproxy.freeboard.io/fetch/'
-    ];
-
     /**
-     * Makes an HTTP request with fallback strategies for CORS issues
+     * Makes a simple HTTP request without any headers
      * @param {string} url - Target URL
-     * @param {Object} options - Request options
+     * @param {Object} options - Request options (optional)
      * @returns {Promise<string>} Response HTML
      */
     static async makeRequest(url, options = {}) {
         const config = {
-            headers: { ...this.DEFAULT_HEADERS, ...options.headers },
             timeout: options.timeout || 10000,
             ...options
         };
 
-        // Strategy 1: Direct request (works in Node.js)
-        try {
-            const axios = await import('axios');
-            const response = await axios.default.get(url, config);
-            return response.data;
-        } catch (error) {
-            // If it's a CORS error or we're in browser, try proxy strategies
-            if (this.isCorsError(error) || this.isBrowser()) {
-                return await this.requestWithProxy(url, config);
-            }
-            throw error;
-        }
-    }
-
-    /**
-     * Attempts request through CORS proxies
-     * @param {string} url - Target URL
-     * @param {Object} config - Request config
-     * @returns {Promise<string>} Response HTML
-     */
-    static async requestWithProxy(url, config) {
-        const errors = [];
-        
-        for (const proxy of this.CORS_PROXIES) {
-            try {
-                const proxyUrl = proxy + encodeURIComponent(url);
-                const axios = await import('axios');
-                
-                // Simplified config for proxy requests
-                const proxyConfig = {
-                    timeout: config.timeout || 10000,
-                    headers: {
-                        'Accept': 'application/json, text/plain, */*'
-                    }
-                };
-
-                const response = await axios.default.get(proxyUrl, proxyConfig);
-                
-                // Handle different proxy response formats
-                if (typeof response.data === 'string') {
-                    return response.data;
-                } else if (response.data.contents) {
-                    return response.data.contents;
-                } else if (response.data.data) {
-                    return response.data.data;
-                }
-                
-                return response.data;
-            } catch (error) {
-                errors.push(`${proxy}: ${error.message}`);
-                continue;
-            }
-        }
-
-        throw new Error(`All CORS proxies failed: ${errors.join(', ')}`);
-    }
-
-    /**
-     * Checks if an error is related to CORS
-     * @param {Error} error - Error object
-     * @returns {boolean} True if CORS-related
-     */
-    static isCorsError(error) {
-        const message = error.message.toLowerCase();
-        return message.includes('cors') || 
-               message.includes('cross-origin') || 
-               message.includes('network error') ||
-               message.includes('blocked');
-    }
-
-    /**
-     * Detects if running in browser environment
-     * @returns {boolean} True if in browser
-     */
-    static isBrowser() {
-        return typeof window !== 'undefined' && typeof window.document !== 'undefined';
+        const axios = await import('axios');
+        const response = await axios.default.get(url, config);
+        return response.data;
     }
 }
 

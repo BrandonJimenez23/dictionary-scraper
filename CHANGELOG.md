@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.3] - 2025-06-08
+
+### Changed
+- **RequestHandler Complete Cleanup**: Removed ALL headers and proxy logic from HTTP requests
+  - Eliminated User-Agent, Accept, and all other headers that could cause server blocking
+  - Removed CORS proxy fallback mechanisms completely
+  - Simplified RequestHandler to make clean, direct HTTP requests only
+  - Improved server compatibility by avoiding detection as automated requests
+
+### Tested
+- WordReference scraper: ✅ Working correctly without headers
+- Linguee scraper: ✅ Working correctly without headers
+- Both scrapers now make minimal HTTP requests that are less likely to be blocked
+
 ## [1.1.2] - 2025-06-08
 
 ### Fixed
