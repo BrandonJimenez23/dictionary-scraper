@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.6] - 2025-06-08
+
+### Fixed
+- Critical bug in WordReference scraper: Eliminated empty translation entries that contained only examples without proper word/pos data
+- Translation processing logic: Now only processes meanings when there's an active main translation
+- Data integrity: All translation entries now have proper word, pos, and meaning structure
+
+### Enhanced  
+- WordReference robustness: Better distinction between main translations and alternative meanings
+- Data validation: Added protection against incomplete translation objects
+
+### Tested
+- Comprehensive testing with "running" word across all sections
+- Verified no empty translations are created while preserving example associations
+
 ## [1.1.5] - 2025-06-08
 
 ### Enhanced

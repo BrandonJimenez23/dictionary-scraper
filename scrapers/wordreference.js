@@ -173,19 +173,22 @@ function processWRDTable($table, $) {
     const $toCell = $row.find('td.ToWrd');
     
     if ($fromCell.length > 0 || $toCell.length > 0) {
-      // This is a new translation, save the previous one
-      resetCurrentTranslation();
+      // Check if this is a main translation (has a source word) or just an alternative meaning
+      const hasSourceWord = $fromCell.length > 0 && $fromCell.find('strong').text().trim();
       
-      // Initialize new translation
-      currentTranslation = {
-        word: { word: '', pos: '' },
-        definition: '',
-        meanings: [],
-        examples: []
-      };
+      if (hasSourceWord) {
+        // This is a new main translation, save the previous one
+        resetCurrentTranslation();
+        
+        // Initialize new translation
+        currentTranslation = {
+          word: { word: '', pos: '' },
+          definition: '',
+          meanings: [],
+          examples: []
+        };
 
-      // Extract source word and part of speech
-      if ($fromCell.length > 0) {
+        // Extract source word and part of speech
         const fromText = $fromCell.find('strong').text().trim().replace('⇒', '') || 
                         $fromCell.clone().find('em, .POS2').remove().end().text().trim();
         const fromPos = $fromCell.find('em, .POS2').text().trim();
@@ -194,56 +197,66 @@ function processWRDTable($table, $) {
         currentTranslation.word.pos = fromPos;
       }
 
-      // Extract target word and part of speech
-      const currentMeaning = { word: '', pos: '' };
-      if ($toCell.length > 0) {
-        const toPos = $toCell.find('em, .POS2').text().trim();
-        const $toClone = $toCell.clone();
-        $toClone.find('em, .POS2').remove();
-        const toText = $toClone.text().trim().replace('⇒', '');
+      // Only process meanings if we have an active main translation
+      if (currentTranslation) {
+        // Extract target word and part of speech (for both main translations and alternatives)
+        const currentMeaning = { word: '', pos: '' };
+        if ($toCell.length > 0) {
+          const toPos = $toCell.find('em, .POS2').text().trim();
+          const $toClone = $toCell.clone();
+          $toClone.find('em, .POS2').remove();
+          const toText = $toClone.text().trim().replace('⇒', '');
+          
+          currentMeaning.word = toText;
+          currentMeaning.pos = toPos;
+        }
+
+        // Extract definition from other cells
+        const $allCells = $row.find('td');
+        let cellDefinition = '';
         
-        currentMeaning.word = toText;
-        currentMeaning.pos = toPos;
-      }
-
-      // Extract definition from other cells
-      const $allCells = $row.find('td');
-      $allCells.each((_, cell) => {
-        const $cell = $(cell);
-        
-        // Skip the main word cells
-        if ($cell.hasClass('FrWrd') || $cell.hasClass('ToWrd')) {
-          return;
-        }
-
-        // Look for sense information
-        const senseText = $cell.find('.dsense').text().trim().replace(/[\(\)]/g, '');
-        $cell.find('.dsense').remove();
-        if (senseText) {
-          currentMeaning.sense = senseText;
-        }
-
-        // Look for word sense in source
-        const wordSense = $cell.find('.Fr2').text().trim();
-        $cell.find('.Fr2').remove();
-        if (wordSense) {
-          currentTranslation.word.sense = wordSense;
-        }
-
-        // Extract definition (remove parentheses if they wrap the entire text)
-        const cellText = $cell.text().trim();
-        if (cellText && !currentTranslation.definition) {
-          if (cellText.startsWith('(') && cellText.endsWith(')')) {
-            currentTranslation.definition = cellText.slice(1, -1).trim();
-          } else {
-            currentTranslation.definition = cellText;
+        $allCells.each((_, cell) => {
+          const $cell = $(cell);
+          
+          // Skip the main word cells
+          if ($cell.hasClass('FrWrd') || $cell.hasClass('ToWrd')) {
+            return;
           }
-        }
-      });
 
-      // Add the meaning if it has content
-      if (currentMeaning.word || currentMeaning.pos) {
-        currentTranslation.meanings.push(currentMeaning);
+          // Look for sense information
+          const senseText = $cell.find('.dsense').text().trim().replace(/[\(\)]/g, '');
+          $cell.find('.dsense').remove();
+          if (senseText) {
+            currentMeaning.sense = senseText;
+          }
+
+          // Look for word sense in source
+          const wordSense = $cell.find('.Fr2').text().trim();
+          $cell.find('.Fr2').remove();
+          if (wordSense) {
+            currentTranslation.word.sense = wordSense;
+          }
+
+          // Extract definition (remove parentheses if they wrap the entire text)
+          const cellText = $cell.text().trim();
+          if (cellText) {
+            if (cellText.startsWith('(') && cellText.endsWith(')')) {
+              cellDefinition = cellText.slice(1, -1).trim();
+            } else {
+              cellDefinition = cellText;
+            }
+          }
+        });
+
+        // Set definition only for main translations
+        if (hasSourceWord && cellDefinition) {
+          currentTranslation.definition = cellDefinition;
+        }
+
+        // Add the meaning if it has content
+        if (currentMeaning.word || currentMeaning.pos) {
+          currentTranslation.meanings.push(currentMeaning);
+        }
       }
     }
   });
