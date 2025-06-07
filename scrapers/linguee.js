@@ -1,51 +1,112 @@
 import axios from 'axios';
 import * as cheerio from 'cheerio';
+import { LanguageValidator, RequestHandler } from '../utils/common.js';
 
 /**
  * Linguee scraper - Extracts translations with real-world contexts
  * @param {string} word - Word to translate
- * @param {string} from - Source language (e.g., 'en')
- * @param {string} to - Target language (e.g., 'es')
+ * @param {string} from - Source language (e.g., 'en', 'english')
+ * @param {string} to - Target language (e.g., 'es', 'spanish')
  * @returns {Object} JSON object with translations and contexts
  */
 export async function scrapeLinguee(word, from = 'en', to = 'es') {
-    const url = buildLingueeURL(word, from, to);
-
-    try {
-        const { data } = await axios.get(url, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                'Accept-Language': 'en-US,en;q=0.9',
-                'Accept-Encoding': 'gzip, deflate, br',
-                'Connection': 'keep-alive',
-                'Upgrade-Insecure-Requests': '1'
-            }
-        });
-
-        return processLingueeHTML(data, word, from, to);
-    } catch (error) {
-        console.error(`Error scraping Linguee for "${word}":`, error.message);
+    // Validate and normalize language codes
+    const validation = LanguageValidator.validatePair(from, to);
+    if (validation.error) {
         return {
             source: 'linguee',
             inputWord: word,
             fromLang: from,
             toLang: to,
             translations: [],
-            error: error.message
+            error: validation.error,
+            timestamp: new Date().toISOString()
         };
     }
+
+    const normalizedFrom = validation.from;
+    const normalizedTo = validation.to;
+
+    // Try multiple language code formats (Linguee uses long names)
+    const fromAlternatives = LanguageValidator.getAlternatives(from);
+    const toAlternatives = LanguageValidator.getAlternatives(to);
+    
+    let lastError = null;
+
+    // Try different combinations of language codes
+    for (const fromCode of fromAlternatives) {
+        for (const toCode of toAlternatives) {
+            try {
+                const url = buildLingueeURL(word, fromCode, toCode);
+                
+                const html = await RequestHandler.makeRequest(url, {
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                        'Accept-Language': 'en-US,en;q=0.9',
+                        'Referer': 'https://www.linguee.com/'
+                    }
+                });
+
+                const result = processLingueeHTML(html, word, normalizedFrom, normalizedTo);
+                
+                // Check if we got valid results
+                if (result.translations && result.translations.length > 0) {
+                    return {
+                        ...result,
+                        languagePair: `${fromCode}-${toCode}`,
+                        normalizedFrom,
+                        normalizedTo
+                    };
+                }
+            } catch (error) {
+                lastError = error;
+                console.warn(`Linguee failed with ${fromCode}-${toCode}:`, error.message);
+                continue;
+            }
+        }
+    }
+
+    // If all attempts failed, return error result
+    return {
+        source: 'linguee',
+        inputWord: word,
+        fromLang: normalizedFrom,
+        toLang: normalizedTo,
+        translations: [],
+        error: lastError?.message || `No translations found for "${word}" from ${validation.fromName} to ${validation.toName}`,
+        attemptedLanguagePairs: fromAlternatives.flatMap(f => toAlternatives.map(t => `${f}-${t}`)),
+        timestamp: new Date().toISOString()
+    };
 }
 
 function buildLingueeURL(word, from, to) {
-    // Language name mapping for Linguee URLs
+    // Language name mapping for Linguee URLs - supports both short and long codes
     const langNames = {
-        'en': 'english',
-        'es': 'spanish', 
-        'fr': 'french',
-        'de': 'german',
-        'pt': 'portuguese',
-        'it': 'italian'
+        'en': 'english', 'english': 'english',
+        'es': 'spanish', 'spanish': 'spanish',
+        'fr': 'french', 'french': 'french',
+        'de': 'german', 'german': 'german',
+        'pt': 'portuguese', 'portuguese': 'portuguese',
+        'it': 'italian', 'italian': 'italian',
+        'nl': 'dutch', 'dutch': 'dutch',
+        'pl': 'polish', 'polish': 'polish',
+        'sv': 'swedish', 'swedish': 'swedish',
+        'da': 'danish', 'danish': 'danish',
+        'fi': 'finnish', 'finnish': 'finnish',
+        'cs': 'czech', 'czech': 'czech',
+        'ro': 'romanian', 'romanian': 'romanian',
+        'tr': 'turkish', 'turkish': 'turkish',
+        'el': 'greek', 'greek': 'greek',
+        'hu': 'hungarian', 'hungarian': 'hungarian',
+        'bg': 'bulgarian', 'bulgarian': 'bulgarian',
+        'hr': 'croatian', 'croatian': 'croatian',
+        'sk': 'slovak', 'slovak': 'slovak',
+        'sl': 'slovenian', 'slovenian': 'slovenian',
+        'et': 'estonian', 'estonian': 'estonian',
+        'lv': 'latvian', 'latvian': 'latvian',
+        'lt': 'lithuanian', 'lithuanian': 'lithuanian',
+        'mt': 'maltese', 'maltese': 'maltese'
     };
 
     const fromName = langNames[from] || from;

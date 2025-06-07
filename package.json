@@ -1,21 +1,25 @@
 {
   "name": "multi-dictionary-scraper",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "type": "module",
-  "main": "multi-scraper.js",
-  "module": "multi-scraper.js",
+  "main": "index.js",
+  "module": "index.js",
   "types": "index.d.ts",
   "exports": {
     ".": {
+      "import": "./index.js",
+      "require": "./index.js"
+    },
+    "./legacy": {
       "import": "./multi-scraper.js",
       "require": "./multi-scraper.js"
     }
   },
   "files": [
+    "index.js",
     "multi-scraper.js",
     "scrapers/",
     "utils/",
-    "index.js",
     "index.d.ts",
     "examples.js",
     "README.md"
@@ -53,12 +57,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/multi-dictionary-scraper.git"
+    "url": "https://github.com/BrandonJimenez23/multi-dictionary-scraper.git"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/multi-dictionary-scraper/issues"
+    "url": "https://github.com/BrandonJimenez23/multi-dictionary-scraper/issues"
   },
-  "homepage": "https://github.com/yourusername/multi-dictionary-scraper#readme",
+  "homepage": "https://github.com/BrandonJimenez23/multi-dictionary-scraper#readme",
   "engines": {
     "node": ">=16.0.0"
   },

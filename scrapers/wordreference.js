@@ -1,28 +1,81 @@
 import axios from 'axios';
 import * as cheerio from 'cheerio';
+import { LanguageValidator, RequestHandler } from '../utils/common.js';
 
+/**
+ * Scrapes WordReference for translations with CORS handling and language validation
+ * @param {string} word - Word to translate
+ * @param {string} from - Source language code (short or long form)
+ * @param {string} to - Target language code (short or long form)
+ * @returns {Promise<Object>} Translation result
+ */
 export async function scrapeWordReference(word, from = 'en', to = 'es') {
-  const url = `https://www.wordreference.com/${from}${to}/${word}`;
-
-  try {
-    const { data } = await axios.get(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-      }
-    });
-
-    return processHTML(data, word);
-  } catch (error) {
-    console.error(`Error scraping WordReference for "${word}":`, error.message);
+  // Validate and normalize language codes
+  const validation = LanguageValidator.validatePair(from, to);
+  if (validation.error) {
     return {
       inputWord: word,
       sections: [],
       audioLinks: [],
       source: 'wordreference',
       timestamp: new Date().toISOString(),
-      error: error.message
+      error: validation.error
     };
   }
+
+  const normalizedFrom = validation.from;
+  const normalizedTo = validation.to;
+  
+  // Try multiple language code formats
+  const fromAlternatives = LanguageValidator.getAlternatives(from);
+  const toAlternatives = LanguageValidator.getAlternatives(to);
+  
+  let lastError = null;
+  
+  // Try different combinations of language codes
+  for (const fromCode of fromAlternatives) {
+    for (const toCode of toAlternatives) {
+      try {
+        const url = `https://www.wordreference.com/${fromCode}${toCode}/${encodeURIComponent(word)}`;
+        
+        const html = await RequestHandler.makeRequest(url, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Referer': 'https://www.wordreference.com/'
+          }
+        });
+
+        const result = processHTML(html, word);
+        
+        // Check if we got valid results
+        if (result.sections && result.sections.length > 0) {
+          return {
+            ...result,
+            languagePair: `${fromCode}-${toCode}`,
+            normalizedFrom,
+            normalizedTo
+          };
+        }
+      } catch (error) {
+        lastError = error;
+        console.warn(`Failed with ${fromCode}-${toCode}:`, error.message);
+        continue;
+      }
+    }
+  }
+
+  // If all attempts failed, return error result
+  return {
+    inputWord: word,
+    sections: [],
+    audioLinks: [],
+    source: 'wordreference',
+    timestamp: new Date().toISOString(),
+    error: lastError?.message || `No translations found for "${word}" from ${validation.fromName} to ${validation.toName}`,
+    attemptedLanguagePairs: fromAlternatives.flatMap(f => toAlternatives.map(t => `${f}-${t}`))
+  };
 }
 
 function processHTML(html, inputWord) {

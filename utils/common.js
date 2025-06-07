@@ -1,41 +1,65 @@
 // Utilidades comunes para todos los scrapers
 export class LanguageCodes {
     static codes = {
-        'en': { name: 'English', native: 'English' },
-        'es': { name: 'Spanish', native: 'Español' },
-        'fr': { name: 'French', native: 'Français' },
-        'de': { name: 'German', native: 'Deutsch' },
-        'it': { name: 'Italian', native: 'Italiano' },
-        'pt': { name: 'Portuguese', native: 'Português' },
-        'ru': { name: 'Russian', native: 'Русский' },
-        'ar': { name: 'Arabic', native: 'العربية' },
-        'zh': { name: 'Chinese', native: '中文' },
-        'ja': { name: 'Japanese', native: '日本語' },
-        'ko': { name: 'Korean', native: '한국어' },
-        'nl': { name: 'Dutch', native: 'Nederlands' },
-        'pl': { name: 'Polish', native: 'Polski' },
-        'sv': { name: 'Swedish', native: 'Svenska' },
-        'no': { name: 'Norwegian', native: 'Norsk' },
-        'da': { name: 'Danish', native: 'Dansk' },
-        'fi': { name: 'Finnish', native: 'Suomi' },
-        'cs': { name: 'Czech', native: 'Čeština' },
-        'ro': { name: 'Romanian', native: 'Română' },
-        'tr': { name: 'Turkish', native: 'Türkçe' },
-        'he': { name: 'Hebrew', native: 'עברית' },
-        'hi': { name: 'Hindi', native: 'हिन्दी' },
-        'th': { name: 'Thai', native: 'ไทย' },
-        'vi': { name: 'Vietnamese', native: 'Tiếng Việt' },
-        'el': { name: 'Greek', native: 'Ελληνικά' },
-        'hu': { name: 'Hungarian', native: 'Magyar' },
-        'bg': { name: 'Bulgarian', native: 'Български' },
-        'hr': { name: 'Croatian', native: 'Hrvatski' },
-        'sk': { name: 'Slovak', native: 'Slovenčina' },
-        'sl': { name: 'Slovenian', native: 'Slovenščina' },
-        'et': { name: 'Estonian', native: 'Eesti' },
-        'lv': { name: 'Latvian', native: 'Latviešu' },
-        'lt': { name: 'Lithuanian', native: 'Lietuvių' },
-        'mt': { name: 'Maltese', native: 'Malti' }
+        // ISO 639-1 codes with long forms
+        'en': { name: 'English', native: 'English', long: 'english' },
+        'es': { name: 'Spanish', native: 'Español', long: 'spanish' },
+        'fr': { name: 'French', native: 'Français', long: 'french' },
+        'de': { name: 'German', native: 'Deutsch', long: 'german' },
+        'it': { name: 'Italian', native: 'Italiano', long: 'italian' },
+        'pt': { name: 'Portuguese', native: 'Português', long: 'portuguese' },
+        'ru': { name: 'Russian', native: 'Русский', long: 'russian' },
+        'ar': { name: 'Arabic', native: 'العربية', long: 'arabic' },
+        'zh': { name: 'Chinese', native: '中文', long: 'chinese' },
+        'ja': { name: 'Japanese', native: '日本語', long: 'japanese' },
+        'ko': { name: 'Korean', native: '한국어', long: 'korean' },
+        'nl': { name: 'Dutch', native: 'Nederlands', long: 'dutch' },
+        'pl': { name: 'Polish', native: 'Polski', long: 'polish' },
+        'sv': { name: 'Swedish', native: 'Svenska', long: 'swedish' },
+        'no': { name: 'Norwegian', native: 'Norsk', long: 'norwegian' },
+        'da': { name: 'Danish', native: 'Dansk', long: 'danish' },
+        'fi': { name: 'Finnish', native: 'Suomi', long: 'finnish' },
+        'cs': { name: 'Czech', native: 'Čeština', long: 'czech' },
+        'ro': { name: 'Romanian', native: 'Română', long: 'romanian' },
+        'tr': { name: 'Turkish', native: 'Türkçe', long: 'turkish' },
+        'he': { name: 'Hebrew', native: 'עברית', long: 'hebrew' },
+        'hi': { name: 'Hindi', native: 'हिन्दी', long: 'hindi' },
+        'th': { name: 'Thai', native: 'ไทย', long: 'thai' },
+        'vi': { name: 'Vietnamese', native: 'Tiếng Việt', long: 'vietnamese' },
+        'el': { name: 'Greek', native: 'Ελληνικά', long: 'greek' },
+        'hu': { name: 'Hungarian', native: 'Magyar', long: 'hungarian' },
+        'bg': { name: 'Bulgarian', native: 'Български', long: 'bulgarian' },
+        'hr': { name: 'Croatian', native: 'Hrvatski', long: 'croatian' },
+        'sk': { name: 'Slovak', native: 'Slovenčina', long: 'slovak' },
+        'sl': { name: 'Slovenian', native: 'Slovenščina', long: 'slovenian' },
+        'et': { name: 'Estonian', native: 'Eesti', long: 'estonian' },
+        'lv': { name: 'Latvian', native: 'Latviešu', long: 'latvian' },
+        'lt': { name: 'Lithuanian', native: 'Lietuvių', long: 'lithuanian' },
+        'mt': { name: 'Maltese', native: 'Malti', long: 'maltese' }
     };
+
+    /**
+     * Normalizes language code to short form (ISO 639-1)
+     * @param {string} code - Language code (short or long form)
+     * @returns {string|null} Normalized short code or null if not found
+     */
+    static normalize(code) {
+        const lowerCode = code.toLowerCase();
+        
+        // Check if it's already a short code
+        if (this.codes[lowerCode]) {
+            return lowerCode;
+        }
+        
+        // Check if it's a long form
+        for (const [shortCode, data] of Object.entries(this.codes)) {
+            if (data.long === lowerCode || data.name.toLowerCase() === lowerCode) {
+                return shortCode;
+            }
+        }
+        
+        return null;
+    }
 
     static getName(code) {
         return this.codes[code]?.name || code;
@@ -283,5 +307,171 @@ export class ErrorHandler {
             word: word,
             timestamp: new Date().toISOString()
         };
+    }
+}
+
+/**
+ * HTTP Request utilities with CORS handling and fallback strategies
+ */
+export class RequestHandler {
+    static DEFAULT_HEADERS = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Accept-Encoding': 'gzip, deflate',
+        'DNT': '1',
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1'
+    };
+
+    static CORS_PROXIES = [
+        'https://api.allorigins.win/get?url=',
+        'https://corsproxy.io/?',
+        'https://cors-anywhere.herokuapp.com/',
+        'https://thingproxy.freeboard.io/fetch/'
+    ];
+
+    /**
+     * Makes an HTTP request with fallback strategies for CORS issues
+     * @param {string} url - Target URL
+     * @param {Object} options - Request options
+     * @returns {Promise<string>} Response HTML
+     */
+    static async makeRequest(url, options = {}) {
+        const config = {
+            headers: { ...this.DEFAULT_HEADERS, ...options.headers },
+            timeout: options.timeout || 10000,
+            ...options
+        };
+
+        // Strategy 1: Direct request (works in Node.js)
+        try {
+            const axios = await import('axios');
+            const response = await axios.default.get(url, config);
+            return response.data;
+        } catch (error) {
+            // If it's a CORS error or we're in browser, try proxy strategies
+            if (this.isCorsError(error) || this.isBrowser()) {
+                return await this.requestWithProxy(url, config);
+            }
+            throw error;
+        }
+    }
+
+    /**
+     * Attempts request through CORS proxies
+     * @param {string} url - Target URL
+     * @param {Object} config - Request config
+     * @returns {Promise<string>} Response HTML
+     */
+    static async requestWithProxy(url, config) {
+        const errors = [];
+        
+        for (const proxy of this.CORS_PROXIES) {
+            try {
+                const proxyUrl = proxy + encodeURIComponent(url);
+                const axios = await import('axios');
+                
+                // Simplified config for proxy requests
+                const proxyConfig = {
+                    timeout: config.timeout || 10000,
+                    headers: {
+                        'Accept': 'application/json, text/plain, */*'
+                    }
+                };
+
+                const response = await axios.default.get(proxyUrl, proxyConfig);
+                
+                // Handle different proxy response formats
+                if (typeof response.data === 'string') {
+                    return response.data;
+                } else if (response.data.contents) {
+                    return response.data.contents;
+                } else if (response.data.data) {
+                    return response.data.data;
+                }
+                
+                return response.data;
+            } catch (error) {
+                errors.push(`${proxy}: ${error.message}`);
+                continue;
+            }
+        }
+
+        throw new Error(`All CORS proxies failed: ${errors.join(', ')}`);
+    }
+
+    /**
+     * Checks if an error is related to CORS
+     * @param {Error} error - Error object
+     * @returns {boolean} True if CORS-related
+     */
+    static isCorsError(error) {
+        const message = error.message.toLowerCase();
+        return message.includes('cors') || 
+               message.includes('cross-origin') || 
+               message.includes('network error') ||
+               message.includes('blocked');
+    }
+
+    /**
+     * Detects if running in browser environment
+     * @returns {boolean} True if in browser
+     */
+    static isBrowser() {
+        return typeof window !== 'undefined' && typeof window.document !== 'undefined';
+    }
+}
+
+/**
+ * Language validation and fallback utilities
+ */
+export class LanguageValidator {
+    /**
+     * Validates and normalizes language pair with fallbacks
+     * @param {string} from - Source language
+     * @param {string} to - Target language
+     * @returns {Object} Normalized language pair or error
+     */
+    static validatePair(from, to) {
+        const fromNormalized = LanguageCodes.normalize(from);
+        const toNormalized = LanguageCodes.normalize(to);
+
+        if (!fromNormalized) {
+            return { 
+                error: `Unsupported source language: ${from}. Try using ISO codes like 'en', 'es', 'fr'` 
+            };
+        }
+
+        if (!toNormalized) {
+            return { 
+                error: `Unsupported target language: ${to}. Try using ISO codes like 'en', 'es', 'fr'` 
+            };
+        }
+
+        return {
+            from: fromNormalized,
+            to: toNormalized,
+            fromName: LanguageCodes.getName(fromNormalized),
+            toName: LanguageCodes.getName(toNormalized)
+        };
+    }
+
+    /**
+     * Gets alternative language codes to try if first attempt fails
+     * @param {string} code - Language code
+     * @returns {Array<string>} Alternative codes to try
+     */
+    static getAlternatives(code) {
+        const alternatives = [];
+        const normalized = LanguageCodes.normalize(code);
+        
+        if (normalized) {
+            alternatives.push(normalized);
+            const data = LanguageCodes.codes[normalized];
+            if (data.long) alternatives.push(data.long);
+        }
+        
+        return [...new Set(alternatives)];
     }
 }
